@@ -1,0 +1,29 @@
+{
+  "compilerOptions": {
+    "lib": [ "ES6" ],
+    "noEmitOnError": true,
+    "sourceMap": true,
+    "target": "es5",
+    "outDir": "build",
+    "rootDir": "lib",
+    "declaration": true,
+    "removeComments": true,
+    "importHelpers": false,
+    "strict": true,
+    "noImplicitAny": true,
+    "strictNullChecks": true,
+    "alwaysStrict": true,
+    "noFallthroughCasesInSwitch": true,
+    "moduleResolution": "node",
+    "allowSyntheticDefaultImports": true,
+    "esModuleInterop": true,
+    "experimentalDecorators": true,
+    "forceConsistentCasingInFileNames": true
+  },
+  "include": [
+    "lib"
+  ],
+  "exclude": [
+    "./node_modules/**/*"
+  ]
+}
