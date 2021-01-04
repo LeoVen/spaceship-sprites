@@ -1,6 +1,6 @@
-# Spaceship Sprite
+# Spaceship Sprites
 
-Spaceship Sprite is a port of a random ship sprite generator to rust.
+Spaceship Sprites is a port of a random ship sprite generator to rust.
 
 This is a work in progress.
 
