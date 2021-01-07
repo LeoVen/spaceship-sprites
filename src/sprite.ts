@@ -51,6 +51,18 @@ class Sprite {
                 .map((_, j) => this.pixelAt(i, j).toArray()))
     }
 
+    public svg(): string {
+        let result = `<svg width="${this.dim[0]}" height="${this.dim[1]}">`
+
+        for (let x = 0; x < this._dim[0]; x++) {
+            for (let y = 0; y < this.dim[1]; y++) {
+                result += `<rect width="10" height="10" x="${x}" y="${y}" style="fill:${this.pixelAt(x, y).toRgb()}" />`
+            }
+        }
+
+        return result + "</svg>"
+    }
+
     public get pallet(): Array<Color> {
         return [...this._pallet].map((color) => color.copy())
     }

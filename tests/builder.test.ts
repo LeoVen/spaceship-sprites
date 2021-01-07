@@ -6,7 +6,8 @@ describe('SpriteBuilder', function() {
         let builder = new SpriteBuilder({});
 
         let sprite = builder.single()
-        // console.log(sprite.matrix())
+        console.log(sprite.svg())
+        console.log(sprite.data())
 
         expect(builder).not.toBeNull()
     })

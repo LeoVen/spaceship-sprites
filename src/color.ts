@@ -65,6 +65,10 @@ class Color {
         return this.toInt32().toString(16)
     }
 
+    public toRgb(): string {
+        return `rgb(${Math.round(this.red * 255)}, ${Math.round(this.green * 255)}, ${Math.round(this.blue * 255)})`
+    }
+
     private static toWithinPct(r: number, g: number, b: number): [number, number, number] {
         return [r / 255, g / 255, b / 255]
     }
