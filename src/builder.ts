@@ -14,7 +14,7 @@ interface SpriteBuilderParams {
     // If using random pallet, amount of colors.
     colorCount?: number
     // The dimensions for each border [up, right, down, left].
-    border?: [number, number, number, number]
+    border?: [number, number, number, number] | number
     // If sprites are also symmetric horizontally. Vertical symmetry is on by default.
     horizontalSymmetry?: boolean
 }
@@ -49,7 +49,7 @@ class SpriteBuilder {
             ],
             useRandomPallet = true,
             colorCount = 3,
-            border = [1, 1, 1, 1],
+            border = 1,
             horizontalSymmetry = false,
         }: SpriteBuilderParams
     ) {
@@ -58,72 +58,109 @@ class SpriteBuilder {
         this.colorPallet = colorPallet
         this.useRandomPallet = useRandomPallet
         this.colorCount = colorCount
-        this.border = border
+        this.border = typeof border === "number" ? [border, border, border, border] : border
         this.horizontalSymmetry = horizontalSymmetry
-        this.result = undefined
         this.validate()
     }
 
-    // TODO check for random pallet and count and other newer parameters
-    public single(): Sprite {
-        this.result = new Sprite({dim: this.spriteDimensions})
+    public single(): SpriteBuilder {
+        // TODO check for random pallet and count and other newer parameters
+        let result = new Sprite({dim: this.spriteDimensions})
 
         // Assume that the pallet is trimmed
-        const blanksToInsert = Math.ceil(this.colorPallet.length / this.blankPercentage)
+        const blanksToInsert = Math.round((this.colorPallet.length * this.blankPercentage) / (1 - this.blankPercentage))
         const realPallet = [...this.colorPallet].concat(...new Array(blanksToInsert).fill(null).map(() => Color.BLACK.copy()))
 
-        let random_cols = this.spriteDimensions[0]
-        let random_rows = this.spriteDimensions[1]
-        let half_cols = 0
-        let half_rows = 0
+        let i = 1
+        let queue: Array<Color> = []
 
-        // TODO this logic is equivalent to this.spriteDimensions[x] % 2
-        let center_col = undefined
-        let center_row = undefined
-
-        if (this.horizontalSymmetry) {
-            random_cols = Math.ceil(random_cols / 2)
-            half_cols = random_cols
-            center_col = this.spriteDimensions[0] % 2
-        } else {
-            random_rows = Math.ceil(random_rows / 2)
-            half_rows = random_rows
-            center_row = this.spriteDimensions[1] % 2
-        }
-
-        for (let y = 0; y < random_rows; y++) {
-            for (let x = 0; x < random_cols; x++) {
+        // TODO add horizontal symmetry
+        for (let y = 0; y < result.dim[1]; y++) {
+            i *= -1
+            let element = 0
+            for (let x = 0; x < result.dim[0]; x++) {
                 const r = SpriteBuilder.randInt(0, realPallet.length - 1)
                 const selectedColor = realPallet[r]
-                this.result.setPixelAt(x, y, selectedColor)
-                // TODO
+
+                if (element === Math.floor(result.dim[0] / 2)) {
+                    result.setPixelAt(x, y, selectedColor)
+                } else if (queue.length == element + 1) {
+                    let color = queue.pop()
+                    if (color !== undefined) {
+                        result.setPixelAt(x, y, color)
+                    } else {
+                        throw new Error("Algorithm error. Expected an element when 'queue.pop()' but got none.")
+                    }
+                } else {
+                    queue.push(selectedColor)
+                    result.setPixelAt(x, y, selectedColor)
+                }
+
+                if (element === Math.floor(result.dim[0] / 2) || element === 0) {
+                    i *= -1
+                }
+
+                element += i
             }
         }
 
-        return this.result;
+        this.result = result
+
+        return this
     }
 
-    public spriteWidth(): number {
-        return this.spriteDimensions[0] + this.borderLeft() + this.borderRight()
+    public withBorder(): SpriteBuilder {
+        if (this.result === undefined) {
+            throw new Error("No sprite is set on builder.")
+        }
+
+        let result = new Sprite({dim: [this.spriteWidth, this.spriteHeight]})
+
+        for (let x = this.borderLeft, i = 0; i < this.result.dim[0]; x++, i++) {
+            for (let y = this.borderUp, j = 0; j < this.result.dim[1]; y++, j++) {
+                result.setPixelAt(x, y, this.result.pixelAt(i, j))
+            }
+        }
+
+        this.result = result
+
+        return this
     }
 
-    public spriteHeight(): number {
-        return this.spriteDimensions[1] + this.borderUp() + this.borderDown()
+    public build(): Sprite {
+        // TODO maybe add " || !this.result.isValid()" ??
+        if (this.result === undefined) {
+            throw new Error("Resulting sprite is not valid.")
+        }
+
+        let result = this.result
+        this.result = undefined
+        return result
     }
 
-    public borderUp(): number {
+    // Sprite width including borders
+    public get spriteWidth(): number {
+        return this.spriteDimensions[0] + this.borderLeft + this.borderRight
+    }
+
+    // Sprite height including borders
+    public get spriteHeight(): number {
+        return this.spriteDimensions[1] + this.borderUp + this.borderDown
+    }
+
+    public get borderUp(): number {
         return this.border[0]
     }
 
-    public borderRight(): number {
+    public get borderRight(): number {
         return this.border[1]
     }
 
-    public borderDown(): number {
+    public get borderDown(): number {
         return this.border[2]
     }
 
-    public borderLeft(): number {
+    public get borderLeft(): number {
         return this.border[3]
     }
 

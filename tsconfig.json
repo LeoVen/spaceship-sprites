@@ -13,7 +13,6 @@
     "alwaysStrict": true,
   },
   "include": [
-    "src/**/*",
-    "tests/**/*"
+    "src/**/*"
   ]
 }

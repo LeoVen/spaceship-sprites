@@ -51,17 +51,33 @@ class Sprite {
                 .map((_, j) => this.pixelAt(i, j).toArray()))
     }
 
-    public svg(): string {
-        let result = `<svg width="${this.dim[0]}" height="${this.dim[1]}">`
+    public svg(width: number, height: number): string {
+        let result = `<svg width="${width}" height="${height}" viewBox="0, 0, ${this.dim[0]}, ${this.dim[1]}">`
 
         for (let x = 0; x < this._dim[0]; x++) {
             for (let y = 0; y < this.dim[1]; y++) {
-                result += `<rect width="10" height="10" x="${x}" y="${y}" style="fill:${this.pixelAt(x, y).toRgb()}" />`
+                result += `<rect width="1" height="1" x="${x}" y="${y}" style="fill:${this.pixelAt(x, y).toRgb()}" />`
             }
         }
 
         return result + "</svg>"
     }
+
+    // public svg(width: number, height: number, scale: number = 1): string {
+    //     if (scale <= 0.0) {
+    //         throw new Error(`Invalid scale: ${scale}`)
+    //     }
+
+    //     let result = `<svg width="${width}" height="${height}" viewBox="0, 0, ${this.dim[0] * scale}, ${this.dim[1] * scale}">`
+
+    //     for (let x = 0; x < this._dim[0]; x++) {
+    //         for (let y = 0; y < this.dim[1]; y++) {
+    //             result += `<rect width="${scale}" height="${scale}" x="${x * scale}" y="${y * scale}" style="fill:${this.pixelAt(x, y).toRgb()}" />`
+    //         }
+    //     }
+
+    //     return result + "</svg>"
+    // }
 
     public get pallet(): Array<Color> {
         return [...this._pallet].map((color) => color.copy())
@@ -81,14 +97,30 @@ class Sprite {
         return result;
     }
 
+    public bytes(): Uint8Array {
+        let result = new Uint8Array(this._array.length * 3)
+
+        this._array.forEach((value, index) => {
+            result[index + 0] = value.redByte
+            result[index + 1] = value.greenByte
+            result[index + 2] = value.greenByte
+        })
+
+        return result
+    }
+
+    // public base64(): string {
+    //     return encode(this.bytes().toString())
+    // }
+
     public setPixelAt(x: number, y: number, color: Color): void {
         this.checkIndex(x, y)
-        this._array[x * this._dim[0] + y] = color
+        this._array[y * this._dim[0] + x] = color.copy()
     }
 
     public pixelAt(x: number, y: number): Color {
         this.checkIndex(x, y)
-        return this._array[x * this._dim[0] + y]
+        return this._array[y * this._dim[0] + x].copy()
     }
 
     public static builder(): SpriteBuilder {
@@ -101,7 +133,7 @@ class Sprite {
     }
 
     private checkIndex(x: number, y: number): void {
-        if (x > this._dim[0] || y > this._dim[1]) {
+        if (x >= this._dim[0] || y >= this._dim[1]) {
             throw new Error(`Index out of bounds [${x}, ${y}] when actual dimension is [${this.dim[0]}, ${this.dim[1]}]`)
         }
     }
