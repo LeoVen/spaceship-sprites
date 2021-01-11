@@ -51,33 +51,33 @@ class Sprite {
                 .map((_, j) => this.pixelAt(i, j).toArray()))
     }
 
-    public svg(width: number, height: number): string {
-        let result = `<svg width="${width}" height="${height}" viewBox="0, 0, ${this.dim[0]}, ${this.dim[1]}">`
+    // Creates an SVG from the nearest number greater than the dimension provided, such that it fits exactly each pixel with the same scale.
+    public svg(width: number, height: number, unit: string = 'px') {
+        let w = width + this._dim[0] - (width % this._dim[0])
+        let h = height + this._dim[1] - (height % this._dim[1])
+        return this.svgExact(w, h, unit)
+    }
+
+    // Creates an SVG from exact width and height
+    public svgExact(width: number, height: number, unit: string = 'px'): string {
+        let result = `<svg width="${width}${unit}" height="${height}${unit}" viewBox="0, 0, ${this.dim[0]}, ${this.dim[1]}">`
 
         for (let x = 0; x < this._dim[0]; x++) {
             for (let y = 0; y < this.dim[1]; y++) {
-                result += `<rect width="1" height="1" x="${x}" y="${y}" style="fill:${this.pixelAt(x, y).toRgb()}" />`
+                let rgb = this.pixelAt(x, y).toRgb()
+                result += `<rect width="1" height="1" x="${x}" y="${y}" style="fill:${rgb};" />`
             }
         }
 
         return result + "</svg>"
     }
 
-    // public svg(width: number, height: number, scale: number = 1): string {
-    //     if (scale <= 0.0) {
-    //         throw new Error(`Invalid scale: ${scale}`)
-    //     }
-
-    //     let result = `<svg width="${width}" height="${height}" viewBox="0, 0, ${this.dim[0] * scale}, ${this.dim[1] * scale}">`
-
-    //     for (let x = 0; x < this._dim[0]; x++) {
-    //         for (let y = 0; y < this.dim[1]; y++) {
-    //             result += `<rect width="${scale}" height="${scale}" x="${x * scale}" y="${y * scale}" style="fill:${this.pixelAt(x, y).toRgb()}" />`
-    //         }
-    //     }
-
-    //     return result + "</svg>"
-    // }
+    // Creates an SVG from the sprite where each pixel is a square of pixelSize by pixelSize
+    public svgScale(pixelSize: number, unit: string = 'px') {
+        let width = this._dim[0] * pixelSize
+        let height = this._dim[1] * pixelSize
+        return this.svgExact(width, height, unit)
+    }
 
     public get pallet(): Array<Color> {
         return [...this._pallet].map((color) => color.copy())
