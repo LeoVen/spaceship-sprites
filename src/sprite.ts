@@ -39,6 +39,23 @@ class Sprite {
         return [...this._array].map((color) => color.copy())
     }
 
+    public get pallet(): Array<Color> {
+        return [...this._pallet].map((color) => color.copy())
+    }
+
+    public get horizontalSymmetry(): boolean {
+        return this._horizontalSymmetry
+    }
+
+    public clone(): Sprite {
+        return new Sprite({
+            dim: this.dim,
+            array: this.array,
+            pallet: this.pallet,
+            horizontalSymmetry: this.horizontalSymmetry
+        })
+    }
+
     public arrayValues(): Array<[number, number, number]> {
         return [...this._array].map((color) => color.toArray())
     }
@@ -51,8 +68,21 @@ class Sprite {
                 .map((_, j) => this.pixelAt(i, j).toArray()))
     }
 
-    // Creates an SVG from the nearest number greater than the dimension provided, such that it fits exactly each pixel with the same scale.
-    public svg(width: number, height: number, unit: string = 'px') {
+    // Creates an SVG with the closest matching width and automatic height
+    public svgWidth(width: number, unit: string = 'px'): string {
+        let w = width + this._dim[0] - (width % this._dim[0])
+        let h = (this._dim[1] / this._dim[0]) * w
+        return this.svgExact(w, h, unit)
+    }
+
+    // Creates an SVG with the closest matching height and automatic width
+    public svgHeight(height: number, unit: string = 'px'): string {
+        let h = height + this._dim[1] - (height % this._dim[1])
+        let w = (this._dim[0] / this._dim[1]) * h;
+        return this.svgExact(w, h, unit)
+    }
+
+    public svg(width: number, height: number, unit: string = 'px'): string {
         let w = width + this._dim[0] - (width % this._dim[0])
         let h = height + this._dim[1] - (height % this._dim[1])
         return this.svgExact(w, h, unit)
@@ -77,14 +107,6 @@ class Sprite {
         let width = this._dim[0] * pixelSize
         let height = this._dim[1] * pixelSize
         return this.svgExact(width, height, unit)
-    }
-
-    public get pallet(): Array<Color> {
-        return [...this._pallet].map((color) => color.copy())
-    }
-
-    public get horizontalSymmetry(): boolean {
-        return this._horizontalSymmetry
     }
 
     public data(): Uint32Array {

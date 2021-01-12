@@ -72,10 +72,15 @@ class SpriteBuilder {
         const realPallet = [...this.colorPallet].concat(...new Array(blanksToInsert).fill(null).map(() => Color.BLACK.copy()))
 
         let i = 1
+        let m = 1
         let queue: Array<Color> = []
 
+        if (this.horizontalSymmetry) {
+            m = 2
+        }
+
         // TODO add horizontal symmetry
-        for (let y = 0; y < result.dim[1]; y++) {
+        for (let y = 0; y < Math.ceil(result.dim[1] / m); y++) {
             i *= -1
             let element = 0
             for (let x = 0; x < result.dim[0]; x++) {
@@ -123,6 +128,34 @@ class SpriteBuilder {
         }
 
         this.result = result
+
+        return this
+    }
+
+    // Adds padding until sprite gets to be of dimensions dim
+    public withPadding(dim: [number, number]): SpriteBuilder {
+        if (this.result === undefined) {
+            throw new Error("No sprite is set on builder.")
+        }
+
+        if (dim[0] < this.result.dim[0]) {
+            throw new Error(`Cannot set padding because ${dim[0]} is less than the existing width of ${this.result.dim[0]}`)
+        }
+        if (dim[1] < this.result.dim[1]) {
+            throw new Error(`Cannot set padding because ${dim[1]} is less than the existing height of ${this.result.dim[1]}`)
+        }
+
+        let old: Sprite = this.result;
+        this.result = new Sprite({dim: dim})
+
+        let leftOffset = Math.floor((dim[0] - old.dim[0]) / 2)
+        let topOffset = Math.floor((dim[1] - old.dim[1]) / 2)
+
+        for (let x = leftOffset, i = 0; i < old.dim[0]; x++, i++) {
+            for (let y = topOffset, j = 0; j < old.dim[1]; y++, j++) {
+                this.result.setPixelAt(x, y, old.pixelAt(i, j))
+            }
+        }
 
         return this
     }
