@@ -1,13 +1,9 @@
-import Sprite from '../src/sprite'
-import SpriteBuilder from '../src/builder'
+import { Color, Sprite, SpriteBuilder } from '../src'
 
 describe('SpriteBuilder', function() {
     it('single', function() {
-        let builder = new SpriteBuilder({border: 2});
-
-        let sprite = builder.single().withBorder().build()
-        console.log(sprite.svg(100, 100))
-        // console.log(sprite.base64())
+        // Creates a builder with default parameters
+        let builder = new SpriteBuilder({})
 
         expect(builder).not.toBeNull()
     })

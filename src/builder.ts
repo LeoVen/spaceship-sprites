@@ -12,11 +12,13 @@ interface SpriteBuilderParams {
     // Uses a random pallet each iteration.
     useRandomPallet?: boolean
     // If using random pallet, amount of colors.
-    colorCount?: number
+    randomColorCount?: number
     // The dimensions for each border [up, right, down, left].
     border?: [number, number, number, number] | number
     // If sprites are also symmetric horizontally. Vertical symmetry is on by default.
     horizontalSymmetry?: boolean
+    // The color used in spots 'without' pixels
+    blankColor?: Color
 }
 
 // Builds sprites with preset values
@@ -30,11 +32,13 @@ class SpriteBuilder {
     // Uses a random pallet each iteration.
     private useRandomPallet: boolean
     // If using random pallet, amount of colors.
-    private colorCount: number
+    private randomColorCount: number
     // The dimensions for each border [up, right, down, left].
     private border: [number, number, number, number]
     // If sprites are also symmetric horizontally. Vertical symmetry is on by default.
     private horizontalSymmetry: boolean
+    // The color used in spots 'without' pixels
+    private blankColor: Color
 
     private result?: Sprite
 
@@ -48,28 +52,28 @@ class SpriteBuilder {
                 Color.random(),
             ],
             useRandomPallet = true,
-            colorCount = 3,
+            randomColorCount = 3,
             border = 1,
             horizontalSymmetry = false,
+            blankColor = new Color(0, 0, 0)
         }: SpriteBuilderParams
     ) {
         this.spriteDimensions = spriteDimensions
         this.blankPercentage = blankPercentage
         this.colorPallet = colorPallet
         this.useRandomPallet = useRandomPallet
-        this.colorCount = colorCount
+        this.randomColorCount = randomColorCount
         this.border = typeof border === "number" ? [border, border, border, border] : border
         this.horizontalSymmetry = horizontalSymmetry
+        this.blankColor = blankColor
         this.validate()
     }
 
     public single(): SpriteBuilder {
-        // TODO check for random pallet and count and other newer parameters
-        let result = new Sprite({dim: this.spriteDimensions})
+        let result = new Sprite({dim: this.spriteDimensions, colorFill: this.blankColor})
 
-        // Assume that the pallet is trimmed
         const blanksToInsert = Math.round((this.colorPallet.length * this.blankPercentage) / (1 - this.blankPercentage))
-        const realPallet = [...this.colorPallet].concat(...new Array(blanksToInsert).fill(null).map(() => Color.BLACK.copy()))
+        const realPallet = [...this.colorPallet].concat(...new Array(blanksToInsert).fill(null).map(() => this.blankColor.copy()))
 
         let i = 1
         let m = 1
@@ -79,6 +83,7 @@ class SpriteBuilder {
             m = 2
         }
 
+        // TODO check for random pallet and count and other newer parameters
         // TODO add horizontal symmetry
         for (let y = 0; y < Math.ceil(result.dim[1] / m); y++) {
             i *= -1
@@ -119,7 +124,7 @@ class SpriteBuilder {
             throw new Error("No sprite is set on builder.")
         }
 
-        let result = new Sprite({dim: [this.spriteWidth, this.spriteHeight]})
+        let result = new Sprite({dim: [this.spriteWidth, this.spriteHeight], colorFill: this.blankColor})
 
         for (let x = this.borderLeft, i = 0; i < this.result.dim[0]; x++, i++) {
             for (let y = this.borderUp, j = 0; j < this.result.dim[1]; y++, j++) {
@@ -146,7 +151,7 @@ class SpriteBuilder {
         }
 
         let old: Sprite = this.result;
-        this.result = new Sprite({dim: dim})
+        this.result = new Sprite({dim: dim, colorFill: this.blankColor})
 
         let leftOffset = Math.floor((dim[0] - old.dim[0]) / 2)
         let topOffset = Math.floor((dim[1] - old.dim[1]) / 2)

@@ -7,6 +7,7 @@ interface SpriteParams {
     array?: Array<Color>
     pallet?: Array<Color>
     horizontalSymmetry?: boolean
+    colorFill?: Color
 }
 
 class Sprite {
@@ -15,11 +16,13 @@ class Sprite {
     private _pallet: Array<Color>
     private _horizontalSymmetry: boolean
 
-    constructor({dim, array, pallet, horizontalSymmetry}: SpriteParams) {
+    constructor({dim, array, pallet, horizontalSymmetry, colorFill}: SpriteParams) {
         Validator.positiveInteger(dim[0], "dim.x")
         Validator.positiveInteger(dim[1], "dim.y")
 
-        let arr: Array<Color> = array || new Array(dim[0] * dim[1]).fill(null).map(() => new Color(0, 0, 0))
+        let color = colorFill === undefined ? new Color(0, 0, 0) : colorFill
+
+        let arr: Array<Color> = array || new Array(dim[0] * dim[1]).fill(null).map(() => color.copy())
 
         if (dim[0] * dim[1] != arr.length) {
             throw new Error(`Invalid array dimensions [${dim[0]}, ${dim[1]}] for array of length ${arr.length}`)
