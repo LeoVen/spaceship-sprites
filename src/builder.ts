@@ -2,8 +2,8 @@ import { Color } from '.'
 import Sprite from './sprite'
 import Validator from './validator'
 
-interface SpriteBuilderParams {
-    // The width and Height of the sprite.
+interface SpriteBuilderOptions {
+    // The Width and Height of the sprite.
     spriteDimensions?: [number, number]
     // The percentage of blank spaces.
     blankPercentage?: number
@@ -13,6 +13,8 @@ interface SpriteBuilderParams {
     useRandomPallet?: boolean
     // If using random pallet, amount of colors.
     randomColorCount?: number
+    // If using random pallet, if the alpha value should also be random (default is 1).
+    randomAlpha?: boolean
     // The dimensions for each border [up, right, down, left].
     border?: [number, number, number, number] | number
     // If sprites are also symmetric horizontally. Vertical symmetry is on by default.
@@ -31,8 +33,10 @@ class SpriteBuilder {
     private colorPallet: Array<Color>
     // Uses a random pallet each iteration.
     private useRandomPallet: boolean
-    // If using random pallet, amount of colors.
+    // If using random pallet, amount of random colors at each iteration.
     private randomColorCount: number
+    // If using random pallet, if the alpha value should also be random (default is 1).
+    private randomAlpha: boolean
     // The dimensions for each border [up, right, down, left].
     private border: [number, number, number, number]
     // If sprites are also symmetric horizontally. Vertical symmetry is on by default.
@@ -51,19 +55,21 @@ class SpriteBuilder {
                 Color.random(),
                 Color.random(),
             ],
-            useRandomPallet = true,
+            useRandomPallet = false,
             randomColorCount = 3,
+            randomAlpha = false,
             border = 1,
             horizontalSymmetry = false,
-            blankColor = new Color(0, 0, 0)
-        }: SpriteBuilderParams
+            blankColor = Color.WHITE
+        }: SpriteBuilderOptions
     ) {
         this.spriteDimensions = spriteDimensions
         this.blankPercentage = blankPercentage
         this.colorPallet = colorPallet
         this.useRandomPallet = useRandomPallet
         this.randomColorCount = randomColorCount
-        this.border = typeof border === "number" ? [border, border, border, border] : border
+        this.randomAlpha = randomAlpha
+        this.border = typeof border === 'number' ? [border, border, border, border] : border
         this.horizontalSymmetry = horizontalSymmetry
         this.blankColor = blankColor
         this.validate()
@@ -72,8 +78,7 @@ class SpriteBuilder {
     public single(): SpriteBuilder {
         let result = new Sprite({dim: this.spriteDimensions, colorFill: this.blankColor})
 
-        const blanksToInsert = Math.round((this.colorPallet.length * this.blankPercentage) / (1 - this.blankPercentage))
-        const realPallet = [...this.colorPallet].concat(...new Array(blanksToInsert).fill(null).map(() => this.blankColor.copy()))
+        const realPallet = this.addBlanks(this.getPallet())
 
         let i = 1
         let m = 1
@@ -83,14 +88,12 @@ class SpriteBuilder {
             m = 2
         }
 
-        // TODO check for random pallet and count and other newer parameters
         // TODO add horizontal symmetry
         for (let y = 0; y < Math.ceil(result.dim[1] / m); y++) {
             i *= -1
             let element = 0
             for (let x = 0; x < result.dim[0]; x++) {
-                const r = SpriteBuilder.randInt(0, realPallet.length - 1)
-                const selectedColor = realPallet[r]
+                const selectedColor = this.selectColor(realPallet)
 
                 if (element === Math.floor(result.dim[0] / 2)) {
                     result.setPixelAt(x, y, selectedColor)
@@ -99,7 +102,7 @@ class SpriteBuilder {
                     if (color !== undefined) {
                         result.setPixelAt(x, y, color)
                     } else {
-                        throw new Error("Algorithm error. Expected an element when 'queue.pop()' but got none.")
+                        throw new Error('Algorithm error. Expected an element when "queue.pop()" but got none.')
                     }
                 } else {
                     queue.push(selectedColor)
@@ -119,12 +122,23 @@ class SpriteBuilder {
         return this
     }
 
-    public withBorder(): SpriteBuilder {
-        if (this.result === undefined) {
-            throw new Error("No sprite is set on builder.")
+    public withDim(dim: [number, number]): SpriteBuilder {
+        if (this.result !== undefined) {
+            throw new Error('Can\'t change the dimension after having a sprite already built.')
         }
 
-        let result = new Sprite({dim: [this.spriteWidth, this.spriteHeight], colorFill: this.blankColor})
+        this.spriteDimensions = dim
+        this.validate()
+
+        return this
+    }
+
+    public withBorder(borderColor: Color = this.blankColor): SpriteBuilder {
+        if (this.result === undefined) {
+            throw new Error('No sprite is set on builder.')
+        }
+
+        let result = new Sprite({dim: [this.spriteWidth, this.spriteHeight], colorFill: borderColor})
 
         for (let x = this.borderLeft, i = 0; i < this.result.dim[0]; x++, i++) {
             for (let y = this.borderUp, j = 0; j < this.result.dim[1]; y++, j++) {
@@ -138,9 +152,9 @@ class SpriteBuilder {
     }
 
     // Adds padding until sprite gets to be of dimensions dim
-    public withPadding(dim: [number, number]): SpriteBuilder {
+    public withPadding(dim: [number, number], paddingColor: Color = this.blankColor): SpriteBuilder {
         if (this.result === undefined) {
-            throw new Error("No sprite is set on builder.")
+            throw new Error('No sprite is set on builder.')
         }
 
         if (dim[0] < this.result.dim[0]) {
@@ -151,7 +165,7 @@ class SpriteBuilder {
         }
 
         let old: Sprite = this.result;
-        this.result = new Sprite({dim: dim, colorFill: this.blankColor})
+        this.result = new Sprite({dim: dim, colorFill: paddingColor})
 
         let leftOffset = Math.floor((dim[0] - old.dim[0]) / 2)
         let topOffset = Math.floor((dim[1] - old.dim[1]) / 2)
@@ -168,12 +182,31 @@ class SpriteBuilder {
     public build(): Sprite {
         // TODO maybe add " || !this.result.isValid()" ??
         if (this.result === undefined) {
-            throw new Error("Resulting sprite is not valid.")
+            throw new Error('Resulting sprite is not valid.')
         }
 
         let result = this.result
         this.result = undefined
         return result
+    }
+
+    // Gets either a random pallet or the builder's one
+    public getPallet(): Array<Color> {
+        if (this.useRandomPallet)
+            return SpriteBuilder.randomPallet(this.randomColorCount, this.randomAlpha)
+        else
+            return this.colorPallet
+    }
+
+    // Selects a color from the builder pallet or a random one, assuming that the blanks have already been added
+    public selectColor(pallet: Array<Color>): Color {
+        return pallet[SpriteBuilder.randInt(0, pallet.length - 1)]
+    }
+
+    // Adds blank colors to the pallet so that the ratio of them is close to the builder's blankPercentage
+    public addBlanks(pallet: Array<Color>): Array<Color> {
+        const blanksToInsert = Math.round((pallet.length * this.blankPercentage) / (1 - this.blankPercentage))
+        return [...pallet].concat(...new Array(blanksToInsert).fill(null).map(() => this.blankColor.copy()))
     }
 
     // Sprite width including borders
@@ -202,12 +235,22 @@ class SpriteBuilder {
         return this.border[3]
     }
 
-    private static randInt(min: number, max: number): number {
+    public static randInt(min: number, max: number): number {
         return Math.floor(Math.random() * (max - min + 1)) + min;
     }
 
+    public static randomPallet(colorCount: number, randomAlpha: boolean): Array<Color> {
+        Validator.positive(colorCount, 'colorCount')
+
+        return Array.from({ length: colorCount }, () => Color.random(randomAlpha))
+    }
+
     private validate(): void {
-        Validator.percentage(this.blankPercentage, "blankPercentage")
+        Validator.positive(this.spriteDimensions[0], 'this.spriteDimensions[0]')
+        Validator.positive(this.spriteDimensions[1], 'this.spriteDimensions[1]')
+
+        Validator.percentage(this.blankPercentage, 'blankPercentage')
+
         for (let i = 0; i < this.border.length; i++) {
             Validator.positiveInteger(this.border[i], `border[${i}]`)
         }

@@ -17,10 +17,10 @@ class Sprite {
     private _horizontalSymmetry: boolean
 
     constructor({dim, array, pallet, horizontalSymmetry, colorFill}: SpriteParams) {
-        Validator.positiveInteger(dim[0], "dim.x")
-        Validator.positiveInteger(dim[1], "dim.y")
+        Validator.positiveInteger(dim[0], 'dim.x')
+        Validator.positiveInteger(dim[1], 'dim.y')
 
-        let color = colorFill === undefined ? new Color(0, 0, 0) : colorFill
+        let color = colorFill === undefined ? new Color(0, 0, 0, 1) : colorFill
 
         let arr: Array<Color> = array || new Array(dim[0] * dim[1]).fill(null).map(() => color.copy())
 
@@ -59,11 +59,11 @@ class Sprite {
         })
     }
 
-    public arrayValues(): Array<[number, number, number]> {
+    public arrayValues(): Array<[number, number, number, number]> {
         return [...this._array].map((color) => color.toArray())
     }
 
-    public matrix(): Array<Array<[number, number, number]>> {
+    public matrix(): Array<Array<[number, number, number, number]>> {
         return new Array(this.dim[0])
             .fill(null)
             .map((_, i) => new Array(this.dim[1])
@@ -97,8 +97,8 @@ class Sprite {
 
         for (let x = 0; x < this._dim[0]; x++) {
             for (let y = 0; y < this.dim[1]; y++) {
-                let rgb = this.pixelAt(x, y).toRgb()
-                result += `<rect width="1" height="1" x="${x}" y="${y}" style="fill:${rgb};" />`
+                let rgba = this.pixelAt(x, y).toRgba()
+                result += `<rect width="1" height="1" x="${x}" y="${y}" style="fill:${rgba};" />`
             }
         }
 
@@ -116,7 +116,7 @@ class Sprite {
         let result = new Uint32Array(this._array.length)
 
         this._array.forEach((value, index) => {
-            result[index] = value.toInt32()
+            result[index] = value.toInt()
         })
 
         return result;

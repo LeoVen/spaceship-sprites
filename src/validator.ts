@@ -5,8 +5,7 @@ const validateInteger = (value: number, name: string) => {
     }
 }
 
-const validatePositiveInteger = (value: number, name: string) => {
-    validateInteger(value, name)
+const validatePositive = (value: number, name: string) => {
     if (value < 0.0) {
         throw new Error(`[Validator] Expected positive integer for ${name} but found ${value}`)
     }
@@ -18,8 +17,14 @@ const validatePercentage = (value: number, name: string) => {
     }
 }
 
+const validatePositiveInteger = (value: number, name: string) => {
+    validateInteger(value, name)
+    validatePositive(value, name)
+}
+
 class Validator {
     static integer = validateInteger
+    static positive = validatePositive
     static positiveInteger = validatePositiveInteger
     static percentage = validatePercentage
 }
