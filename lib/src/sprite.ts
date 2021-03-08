@@ -92,8 +92,8 @@ class Sprite {
     }
 
     // Creates an SVG from exact width and height
-    public svgExact(width: number, height: number, unit: string = 'px'): string {
-        let result = `<svg width="${width}${unit}" height="${height}${unit}" viewBox="0, 0, ${this.dim[0]}, ${this.dim[1]}">`
+    public svgExact(width: number, height: number, unit: string = 'px', parameters: string = ''): string {
+        let result = `<svg ${parameters} width="${width}${unit}" height="${height}${unit}" viewBox="0, 0, ${this.dim[0]}, ${this.dim[1]}">`
 
         for (let x = 0; x < this._dim[0]; x++) {
             for (let y = 0; y < this.dim[1]; y++) {
