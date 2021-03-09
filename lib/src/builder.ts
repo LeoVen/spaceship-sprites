@@ -37,7 +37,7 @@ interface SpriteBuilderOptions {
      */
     horizontalSymmetry?: boolean
     /**
-     * The color used in spots 'without' pixels
+     * The color used in spots 'without' pixels. May also be used as a background color.
      */
     blankColor?: Color
 }
@@ -77,7 +77,7 @@ class SpriteBuilder {
      */
     private horizontalSymmetry: boolean
     /**
-     * The color used in spots 'without' pixels
+     * The color used in spots 'without' pixels. May also be used as a background color.
      */
     private blankColor: Color
 
@@ -112,6 +112,9 @@ class SpriteBuilder {
         this.validate()
     }
 
+    /**
+     * Builds a single sprite with the builder's configuration.
+     */
     public single(): SpriteBuilder {
         let result = new Sprite({dim: this.spriteDimensions, colorFill: this.blankColor})
 
@@ -159,6 +162,11 @@ class SpriteBuilder {
         return this
     }
 
+    /**
+     * Changes the builder sprite dimension. Can only be called when there is no sprite being built.
+     *
+     * @param dim New sprite dimension
+     */
     public withDim(dim: [number, number]): SpriteBuilder {
         if (this.result !== undefined) {
             throw new Error('Can\'t change the dimension after having a sprite already built.')
@@ -170,6 +178,12 @@ class SpriteBuilder {
         return this
     }
 
+    /**
+     * Adds a border around the sprite. The default color is the blankColor.
+     *
+     * @param {[number, number, number, number]} borders Amount of pixels at each corner. See the enum Border.
+     * @param {Color} borderColor The color for the new border. Defaults to blankColor
+     */
     public withBorder(borders: [number, number, number, number] = this.border, borderColor: Color = this.blankColor): SpriteBuilder {
         if (this.result === undefined) {
             throw new Error('No sprite is set on builder.')
@@ -192,7 +206,14 @@ class SpriteBuilder {
     }
 
     /**
-     * To do edges, simply iterate from each side to the other and mark the first pixel found that is not equal to the background color
+     * To do edges, simply iterate from one side to another and mark the first
+     * pixel found that is not equal to the background color. Then, apply edges
+     * by adding another pixel before the new found one by mixing edgeColor with
+     * the pixel found.
+     *
+     * @param {Color} edgeColor The edge color.
+     * @param {Number} edgeWeight The weight for the edge when mixing with the adjacend pixel.
+     * @param {boolean} addExtraBorder Adds 1 pixel border to fit the new edges. True by default.
      */
     public withEdges(edgeColor: Color = Color.BLACK, edgeWeight: number = 0.7, addExtraBorder: boolean = true): SpriteBuilder {
         if (this.result === undefined) {
@@ -229,8 +250,9 @@ class SpriteBuilder {
                     break
 
                 if (!pixel.equals(this.blankColor)) {
-                    this.result.setPixelAt(x - 1, y, pixel.mixWeighed(edgeColor, edgeWeight))
-                    this.result.setPixelAt(this.result.dim[Dimension.Width] - x, y, pixel.mixWeighed(edgeColor, edgeWeight))
+                    this.result.setPixelAtChecked(x - 1, y, pixel.mixWeighed(edgeColor, edgeWeight))
+                    // TODO In the future, check if the sprite is vertically symmetric
+                    this.result.setPixelAtChecked(this.result.dim[Dimension.Width] - x, y, pixel.mixWeighed(edgeColor, edgeWeight))
                     break
                 }
             }
@@ -245,13 +267,11 @@ class SpriteBuilder {
                     break
 
                 if (!pixel.equals(this.blankColor)) {
-                    this.result.setPixelAt(x, y + 1, pixel.mixWeighed(edgeColor, edgeWeight))
+                    this.result.setPixelAtChecked(x, y + 1, pixel.mixWeighed(edgeColor, edgeWeight))
                     break
                 }
             }
         }
-
-
 
         return this
     }
@@ -268,10 +288,12 @@ class SpriteBuilder {
      *      // Calculate distance to the center (cx, cy)
      *      // The + 0.5 is to calculate relative to the pixel's center, not its origin
      *      let dist = Math.sqrt(Math.pow(cx - (x + 0.5), 2) + Math.pow(cy - (y + 0.5), 2))
-     *      let w = SpriteUtils.clamp((dist / Math.max(dim[0], dim[1])) * 2, 0, 1)
+     *      let w = SpriteUtils.clamp((dist / Math.max(dim[0], dim[1])) * 2, 0, 1) // utils.ts
      *      return pixel.mixWeighed(new Color(0, 0, 0), w)
      *  }
      * ```
+     *
+     * @param {(dim: [number, number], x: number, y: number, pixel: Color) => Color} func The function to apply at each pixel.
      */
     public transform(func: (dim: [number, number], x: number, y: number, pixel: Color) => Color): SpriteBuilder {
         if (this.result === undefined) {
@@ -288,7 +310,15 @@ class SpriteBuilder {
         return this
     }
 
-    // Adds padding until sprite gets to be of dimensions dim
+    /**
+     * Adds border until sprite gets to be of the desired dimension.
+     *
+     * Fails if the sprite is not built yet or if the sprite dimension is less
+     * than the desired dimension.
+     *
+     * @param {[number, number]} dim The desired dimension.
+     * @param {Color} paddingColor The color to be used for padding.
+     */
     public withPadding(dim: [number, number], paddingColor: Color = this.blankColor): SpriteBuilder {
         if (this.result === undefined) {
             throw new Error('No sprite is set on builder.')
@@ -316,6 +346,13 @@ class SpriteBuilder {
         return this
     }
 
+    /**
+     * Builds a sprite and resets the builder sprite to undefined.
+     *
+     * Fails if no valid sprite is built.
+     *
+     * @returns The generated sprite.
+     */
     public build(): Sprite {
         // TODO maybe add " || !this.result.isValid()" ??
         if (this.result === undefined) {
