@@ -11,11 +11,26 @@ interface SpriteParams {
 }
 
 class Sprite {
+    /**
+     * Sprite Dimensions
+     */
     private _dim: [number, number]
+    /**
+     * Sprite Data
+     */
     private _array: Array<Color>
+    /**
+     * Pallet used to generate this sprite
+     */
     private _pallet: Array<Color>
+    /**
+     * If this sprite is horizontally simmetric
+     */
     private _horizontalSymmetry: boolean
 
+    /**
+     * Do not call this constructor directly. Use the SpriteBuilder class.
+     */
     constructor({dim, array, pallet, horizontalSymmetry, colorFill}: SpriteParams) {
         Validator.positiveInteger(dim[0], 'dim.x')
         Validator.positiveInteger(dim[1], 'dim.y')
@@ -35,7 +50,7 @@ class Sprite {
     }
 
     public get dim(): [number, number] {
-        return this._dim
+        return [...this._dim]
     }
 
     public get array(): Array<Color> {
@@ -72,23 +87,23 @@ class Sprite {
     }
 
     // Creates an SVG with the closest matching width and automatic height
-    public svgWidth(width: number, unit: string = 'px'): string {
+    public svgWidth(width: number, unit: string = 'px', parameters: string = ''): string {
         let w = width + this._dim[0] - (width % this._dim[0])
         let h = (this._dim[1] / this._dim[0]) * w
-        return this.svgExact(w, h, unit)
+        return this.svgExact(w, h, unit, parameters)
     }
 
     // Creates an SVG with the closest matching height and automatic width
-    public svgHeight(height: number, unit: string = 'px'): string {
+    public svgHeight(height: number, unit: string = 'px', parameters: string = ''): string {
         let h = height + this._dim[1] - (height % this._dim[1])
         let w = (this._dim[0] / this._dim[1]) * h;
-        return this.svgExact(w, h, unit)
+        return this.svgExact(w, h, unit, parameters)
     }
 
-    public svg(width: number, height: number, unit: string = 'px'): string {
+    public svg(width: number, height: number, unit: string = 'px', parameters: string = ''): string {
         let w = width + this._dim[0] - (width % this._dim[0])
         let h = height + this._dim[1] - (height % this._dim[1])
-        return this.svgExact(w, h, unit)
+        return this.svgExact(w, h, unit, parameters)
     }
 
     // Creates an SVG from exact width and height
@@ -106,10 +121,10 @@ class Sprite {
     }
 
     // Creates an SVG from the sprite where each pixel is a square of pixelSize by pixelSize
-    public svgScale(pixelSize: number, unit: string = 'px') {
+    public svgScale(pixelSize: number, unit: string = 'px', parameters: string = '') {
         let width = this._dim[0] * pixelSize
         let height = this._dim[1] * pixelSize
-        return this.svgExact(width, height, unit)
+        return this.svgExact(width, height, unit, parameters)
     }
 
     public data(): Uint32Array {
@@ -148,6 +163,13 @@ class Sprite {
         return this._array[y * this._dim[0] + x].copy()
     }
 
+    public pixelAtChecked(x: number, y: number): Color | undefined {
+        if (!this.withinBounds(x, y))
+            return undefined
+
+        return this._array[y * this._dim[0] + x].copy()
+    }
+
     public static builder(): SpriteBuilder {
         return new SpriteBuilder({})
     }
@@ -158,9 +180,13 @@ class Sprite {
     }
 
     private checkIndex(x: number, y: number): void {
-        if (x >= this._dim[0] || y >= this._dim[1]) {
+        if (!this.withinBounds(x, y)) {
             throw new Error(`Index out of bounds [${x}, ${y}] when actual dimension is [${this.dim[0]}, ${this.dim[1]}]`)
         }
+    }
+
+    private withinBounds(x: number, y: number): boolean {
+        return x < this._dim[0] && y < this._dim[1]
     }
 }
 

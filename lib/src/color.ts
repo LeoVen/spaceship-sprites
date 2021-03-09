@@ -16,6 +16,13 @@ class Color {
         return new Color(this._color[0], this._color[1], this._color[2], this._color[3])
     }
 
+    public equals(other: Color): boolean {
+        return this.alpha === other.alpha &&
+               this.red === other.red &&
+               this.green === other.green &&
+               this.blue === other.blue
+    }
+
     public static random(randomAlpha: boolean = true): Color {
         return new Color(
             Math.random(),
@@ -95,7 +102,6 @@ class Color {
     }
 
     public toRgb(): string {
-        console.log(this.toByteArray())
         return `rgb(${Math.round(this.red * 255)}, ${Math.round(this.green * 255)}, ${Math.round(this.blue * 255)})`
     }
 
@@ -124,21 +130,51 @@ class Color {
         return Color.fromInt(parseInt(colorString))
     }
 
-    static withinPct(n: number): boolean {
+    public static withinPct(n: number): boolean {
         return n >= 0.0 && n <= 1.0
     }
 
-    static withinByte(n: number): boolean {
+    public static withinByte(n: number): boolean {
         return n >= 0.0 && n <= 255.0
     }
 
-    static toPct(n: number, valueName: string = 'value'): number {
+    public static toPct(n: number, valueName: string = 'value'): number {
         if (Color.withinPct(n))
             return n;
         else if (Color.withinByte(n))
             return n / 255;
         else
             throw new Error(`Invalid ${valueName}: ${n} when converting color. Value N must be either 0 <= N <= 1.0 or 0 <= N <= 255.`)
+    }
+
+    /**
+     * Mixes the current color with another with equal weights
+     * @param other Color to be mixed
+     * @returns A new mixed color
+     */
+    public mix(other: Color): Color {
+        return new Color((this.red + other.red) / 2,
+                         (this.green + other.green) / 2,
+                         (this.blue + other.blue) / 2,
+                         (this.alpha + other.alpha) / 2)
+    }
+
+    /**
+     * Mixes the current color with another where its weight is given by w and the current color is 1 - w
+     * @param other Color to be mixed
+     * @param w The weight of the color to be mixed
+     * @returns A new mixed color
+     */
+    public mixWeighed(other: Color, w: number) {
+        Validator.percentage(w, 'Color Weight')
+
+        let w1 = 1 - w
+        let w2 = w
+
+        return new Color(this.red * w1 + other.red * w2,
+                         this.green * w1 + other.green * w2,
+                         this.blue * w1 + other.blue * w2,
+                         this.alpha * w1 + other.alpha * w2)
     }
 
     public static readonly BLACK = new Color(0, 0, 0, 1)

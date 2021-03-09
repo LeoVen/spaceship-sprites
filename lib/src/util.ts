@@ -1,86 +1,43 @@
-// import { TextEncoder, TextDecoder } from "web-encoding"
+import { Color } from ".";
 
-// const base64abc = [
-//     "A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M",
-//     "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z",
-//     "a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m",
-//     "n", "o", "p", "q", "r", "s", "t", "u", "v", "w", "x", "y", "z",
-//     "0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "+", "/"
-// ];
+/**
+ * Returns a number whose value is limited to the given range.
+ *
+ * Example:
+ * clamp(x * 255, 0, 255)
+ *
+ * @param {Number} value The value to be limited
+ * @param {Number} min The lower boundary of the output range
+ * @param {Number} max The upper boundary of the output range
+ * @returns A number in the range [min, max]
+ */
+function clamp(value: number, min: number, max: number) {
+    return Math.min(Math.max(value, min), max);
+}
 
-// const base64codes = [
-//     255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255,
-//     255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255,
-//     255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 62, 255, 255, 255, 63,
-//     52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 255, 255, 255, 0, 255, 255,
-//     255, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14,
-//     15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 255, 255, 255, 255, 255,
-//     255, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40,
-//     41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51
-// ];
+const transformFade = (dim: [number, number], x: number, y: number, pixel: Color): Color => {
+    let yR = y / dim[1]
 
-// function getBase64Code(charCode: number) {
-//     if (charCode >= base64codes.length) {
-//         throw new Error("Unable to parse base64 string.");
-//     }
-//     const code = base64codes[charCode];
-//     if (code === 255) {
-//         throw new Error("Unable to parse base64 string.");
-//     }
-//     return code;
-// }
+    return pixel.mixWeighed(new Color(0, 0, 0), yR)
+}
 
-// export function bytesToBase64(bytes: number[] | Uint8Array) {
-//     let result = '', i, l = bytes.length;
-//     for (i = 2; i < l; i += 3) {
-//         result += base64abc[bytes[i - 2] >> 2];
-//         result += base64abc[((bytes[i - 2] & 0x03) << 4) | (bytes[i - 1] >> 4)];
-//         result += base64abc[((bytes[i - 1] & 0x0F) << 2) | (bytes[i] >> 6)];
-//         result += base64abc[bytes[i] & 0x3F];
-//     }
-//     if (i === l + 1) { // 1 octet yet to write
-//         result += base64abc[bytes[i - 2] >> 2];
-//         result += base64abc[(bytes[i - 2] & 0x03) << 4];
-//         result += "==";
-//     }
-//     if (i === l) { // 2 octets yet to write
-//         result += base64abc[bytes[i - 2] >> 2];
-//         result += base64abc[((bytes[i - 2] & 0x03) << 4) | (bytes[i - 1] >> 4)];
-//         result += base64abc[(bytes[i - 1] & 0x0F) << 2];
-//         result += "=";
-//     }
-//     return result;
-// }
+const transformVignette = (dim: [number, number], x: number, y: number, pixel: Color): Color => {
+    let cx = dim[0] / 2
+    let cy = dim[1] / 2
 
-// export function base64ToBytes(str: string) {
-//     if (str.length % 4 !== 0) {
-//         throw new Error("Unable to parse base64 string.");
-//     }
-//     const index = str.indexOf("=");
-//     if (index !== -1 && index < str.length - 2) {
-//         throw new Error("Unable to parse base64 string.");
-//     }
-//     let missingOctets = str.endsWith("==") ? 2 : str.endsWith("=") ? 1 : 0,
-//         n = str.length,
-//         result = new Uint8Array(3 * (n / 4)),
-//         buffer: number;
-//     for (let i = 0, j = 0; i < n; i += 4, j += 3) {
-//         buffer =
-//             getBase64Code(str.charCodeAt(i)) << 18 |
-//             getBase64Code(str.charCodeAt(i + 1)) << 12 |
-//             getBase64Code(str.charCodeAt(i + 2)) << 6 |
-//             getBase64Code(str.charCodeAt(i + 3));
-//         result[j] = buffer >> 16;
-//         result[j + 1] = (buffer >> 8) & 0xFF;
-//         result[j + 2] = buffer & 0xFF;
-//     }
-//     return result.subarray(0, result.length - missingOctets);
-// }
+    // Calculate distance to the center (cx, cy)
+    // The + 0.5 is to calculate relative to the pixel's center, not its origin
+    let dist = Math.sqrt(Math.pow(cx - (x + 0.5), 2) + Math.pow(cy - (y + 0.5), 2))
 
-// export function base64encode(str: string, encoder: { encode: (str: string) => Uint8Array | number[] } = new TextEncoder()): string {
-//     return bytesToBase64(encoder.encode(str));
-// }
+    let w = clamp((dist / Math.max(dim[0], dim[1])) * 2, 0, 1)
 
-// export function base64decode(str: string, decoder: { decode: (bytes: Uint8Array) => string } = new TextDecoder()): string {
-//     return decoder.decode(base64ToBytes(str));
-// }
+    return pixel.mixWeighed(new Color(0, 0, 0), w)
+}
+
+class Utils {
+    static clamp = clamp
+    static transformFade = transformFade
+    static transformVignette = transformVignette
+}
+
+export default Utils

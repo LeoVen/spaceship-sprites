@@ -1,47 +1,84 @@
 import { Color } from '.'
 import Sprite from './sprite'
+import Utils from './util'
 import Validator from './validator'
 
 interface SpriteBuilderOptions {
-    // The Width and Height of the sprite.
+    /**
+     * The width and Height of the sprite.
+     */
     spriteDimensions?: [number, number]
-    // The percentage of blank spaces.
+    /**
+     * The percentage of blank spaces.
+     */
     blankPercentage?: number
-    // A pre-defined color pallet.
+    /**
+     * A pre-defined color pallet.
+     */
     colorPallet?: Array<Color>
-    // Uses a random pallet each iteration.
+    /**
+     * Uses a random pallet each sprite.
+     */
     useRandomPallet?: boolean
-    // If using random pallet, amount of colors.
+    /**
+     * If using random pallet, amount of random colors at each sprite.
+     */
     randomColorCount?: number
-    // If using random pallet, if the alpha value should also be random (default is 1).
+    /**
+     * If using random pallet, if the alpha value should also be random (default is always 100% opaque).
+     */
     randomAlpha?: boolean
-    // The dimensions for each border [up, right, down, left].
+    /**
+     * The dimensions for each border [up, right, down, left].
+     */
     border?: [number, number, number, number] | number
-    // If sprites are also symmetric horizontally. Vertical symmetry is on by default.
+    /**
+     * If sprites are also symmetric horizontally. Vertical symmetry is on by default.
+     */
     horizontalSymmetry?: boolean
-    // The color used in spots 'without' pixels
+    /**
+     * The color used in spots 'without' pixels
+     */
     blankColor?: Color
 }
 
 // Builds sprites with preset values
 class SpriteBuilder {
-    // The width and Height of the sprite.
+    /**
+     * The width and Height of the sprite.
+     */
     private spriteDimensions: [number, number]
-    // The percentage of blank spaces.
+    /**
+     * The percentage of blank spaces.
+     */
     private blankPercentage: number
-    // A pre-defined color pallet.
+    /**
+     * A pre-defined color pallet.
+     */
     private colorPallet: Array<Color>
-    // Uses a random pallet each iteration.
+    /**
+     * Uses a random pallet each sprite.
+     */
     private useRandomPallet: boolean
-    // If using random pallet, amount of random colors at each iteration.
+    /**
+     * If using random pallet, amount of random colors at each sprite.
+     */
     private randomColorCount: number
-    // If using random pallet, if the alpha value should also be random (default is 1).
+    /**
+     * If using random pallet, if the alpha value should also be random (default is always 100% opaque).
+     */
     private randomAlpha: boolean
-    // The dimensions for each border [up, right, down, left].
+    /**
+     * The dimensions for each border [up, right, down, left].
+     */
     private border: [number, number, number, number]
-    // If sprites are also symmetric horizontally. Vertical symmetry is on by default.
+    /**
+     * If sprites are also symmetric horizontally. Vertical symmetry is on by default.
+     */
     private horizontalSymmetry: boolean
-    // The color used in spots 'without' pixels
+    /**
+     * The color used in spots 'without' pixels
+     */
     private blankColor: Color
 
     private result?: Sprite
@@ -147,6 +184,38 @@ class SpriteBuilder {
         }
 
         this.result = result
+
+        return this
+    }
+
+    /**
+     * Applies a function to each pixel. In this function you have dim as the
+     * sprite's dimension and x and y of the pixel parameter.
+     *
+     * Example of a Function:
+     * ```
+     * const transformVignette = (dim: [number, number], x: number, y: number, pixel: Color): Color => {
+     *      let cx = dim[0] / 2
+     *      let cy = dim[1] / 2
+     *      // Calculate distance to the center (cx, cy)
+     *      // The + 0.5 is to calculate relative to the pixel's center, not its origin
+     *      let dist = Math.sqrt(Math.pow(cx - (x + 0.5), 2) + Math.pow(cy - (y + 0.5), 2))
+     *      let w = SpriteUtils.clamp((dist / Math.max(dim[0], dim[1])) * 2, 0, 1)
+     *      return pixel.mixWeighed(new Color(0, 0, 0), w)
+     *  }
+     * ```
+     */
+    public transform(func: (dim: [number, number], x: number, y: number, pixel: Color) => Color): SpriteBuilder {
+        if (this.result === undefined) {
+            throw new Error('No sprite is set on builder.')
+        }
+
+        for (let x = 0; x < this.result.dim[0]; x++) {
+            for (let y = 0; y < this.result.dim[1]; y++) {
+                let pixel = this.result.pixelAt(x, y)
+                this.result.setPixelAt(x, y, func(this.result.dim, x, y, pixel))
+            }
+        }
 
         return this
     }

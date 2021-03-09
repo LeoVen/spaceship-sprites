@@ -1,6 +1,13 @@
 import { Color, Sprite, SpriteBuilder } from '../src'
 
 describe('SpriteBuilder', function() {
+    it('equals', function() {
+        let c1 = Color.fromHexa('#FF102030')
+        let c2 = new Color(0x10, 0x20, 0x30, 0xFF)
+
+        expect(c1.equals(c2))
+    })
+
     it('fromHexa', function() {
         let c1 = Color.fromHexa('#FF102030')
         let c2 = new Color(0x10, 0x20, 0x30, 0xFF)
