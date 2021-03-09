@@ -23,6 +23,12 @@ class Color {
                this.blue === other.blue
     }
 
+    public equalsAny(others: Array<Color>): boolean {
+        return others.some(color => {
+            return this.equals(color)
+        })
+    }
+
     public static random(randomAlpha: boolean = true): Color {
         return new Color(
             Math.random(),

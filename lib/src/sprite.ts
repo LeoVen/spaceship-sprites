@@ -170,6 +170,14 @@ class Sprite {
         return this._array[y * this._dim[0] + x].copy()
     }
 
+    public setPixelAtChecked(x: number, y: number, color: Color): boolean {
+        if (!this.withinBounds(x, y))
+            return false
+
+        this._array[y * this._dim[0] + x] = color.copy()
+        return true
+    }
+
     public static builder(): SpriteBuilder {
         return new SpriteBuilder({})
     }
@@ -186,7 +194,7 @@ class Sprite {
     }
 
     private withinBounds(x: number, y: number): boolean {
-        return x < this._dim[0] && y < this._dim[1]
+        return x >= 0 && x < this._dim[0] && y >= 0 && y < this._dim[1]
     }
 }
 
