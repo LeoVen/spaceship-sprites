@@ -75,7 +75,7 @@ class Sprite {
         return this._horizontalSymmetry
     }
 
-    public clone(): Sprite {
+    public copy(): Sprite {
         return new Sprite({
             dim: this.dim,
             array: this.array,
@@ -161,6 +161,9 @@ class Sprite {
         return this.svgExact(width, height, unit, parameters)
     }
 
+    /**
+     * Returns an integer array where each integer is represented by AARRGGBB
+     */
     public data(): Uint32Array {
         let result = new Uint32Array(this._array.length)
 
@@ -171,21 +174,22 @@ class Sprite {
         return result
     }
 
+    /**
+     * Returns a byte array with the ARGB representation
+     */
     public bytes(): Uint8Array {
-        let result = new Uint8Array(this._array.length * 3)
+        let result = new Uint8Array(this._array.length * 4)
 
-        this._array.forEach((value, index) => {
-            result[index + 0] = value.redByte
-            result[index + 1] = value.greenByte
-            result[index + 2] = value.greenByte
-        })
+        for (let i = 0, j = 0; i < this._array.length; i += 1, j += 4) {
+            let color = this._array[i]
+            result[j + 0] = color.alphaByte
+            result[j + 1] = color.redByte
+            result[j + 2] = color.greenByte
+            result[j + 3] = color.greenByte
+        }
 
         return result
     }
-
-    // public base64(): string {
-    //     return encode(this.bytes().toString())
-    // }
 
     public setPixelAt(x: number, y: number, color: Color): void {
         this.checkIndex(x, y)

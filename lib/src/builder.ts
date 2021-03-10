@@ -170,6 +170,8 @@ class SpriteBuilder {
     /**
      * Changes the builder sprite dimension. Can only be called when there is no sprite being built.
      *
+     * Fails if a sprite is already being built.
+     *
      * @param dim New sprite dimension
      */
     public withDim(dim: [number, number]): SpriteBuilder {
@@ -187,6 +189,8 @@ class SpriteBuilder {
 
     /**
      * Adds a border around the sprite. The default color is the blankColor.
+     *
+     * Fails if there is no sprite being built.
      *
      * @param {[number, number, number, number]} borders Amount of pixels at each corner. See the enum Border.
      * @param {Color} borderColor The color for the new border. Defaults to blankColor
