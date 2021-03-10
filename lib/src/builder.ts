@@ -83,30 +83,27 @@ class SpriteBuilder {
 
     private result?: Sprite
 
-    constructor(
-        {
-            spriteDimensions = [7, 7],
-            blankPercentage = 0.5,
-            colorPallet = [
-                Color.random(),
-                Color.random(),
-                Color.random(),
-            ],
-            useRandomPallet = false,
-            randomColorCount = 3,
-            randomAlpha = false,
-            border = 1,
-            horizontalSymmetry = false,
-            blankColor = Color.WHITE
-        }: SpriteBuilderOptions
-    ) {
+    constructor({
+        spriteDimensions = [7, 7],
+        blankPercentage = 0.5,
+        colorPallet = [Color.random(), Color.random(), Color.random()],
+        useRandomPallet = false,
+        randomColorCount = 3,
+        randomAlpha = false,
+        border = 1,
+        horizontalSymmetry = false,
+        blankColor = Color.WHITE
+    }: SpriteBuilderOptions) {
         this.spriteDimensions = spriteDimensions
         this.blankPercentage = blankPercentage
         this.colorPallet = colorPallet
         this.useRandomPallet = useRandomPallet
         this.randomColorCount = randomColorCount
         this.randomAlpha = randomAlpha
-        this.border = typeof border === 'number' ? [border, border, border, border] : border
+        this.border =
+            typeof border === 'number'
+                ? [border, border, border, border]
+                : border
         this.horizontalSymmetry = horizontalSymmetry
         this.blankColor = blankColor
         this.validate()
@@ -116,7 +113,10 @@ class SpriteBuilder {
      * Builds a single sprite with the builder's configuration.
      */
     public single(): SpriteBuilder {
-        let result = new Sprite({dim: this.spriteDimensions, colorFill: this.blankColor})
+        let result = new Sprite({
+            dim: this.spriteDimensions,
+            colorFill: this.blankColor
+        })
 
         const realPallet = this.addBlanks(this.getPallet())
 
@@ -142,14 +142,19 @@ class SpriteBuilder {
                     if (color !== undefined) {
                         result.setPixelAt(x, y, color)
                     } else {
-                        throw new Error('Algorithm error. Expected an element when "queue.pop()" but got none.')
+                        throw new Error(
+                            'Algorithm error. Expected an element when "queue.pop()" but got none.'
+                        )
                     }
                 } else {
                     queue.push(selectedColor)
                     result.setPixelAt(x, y, selectedColor)
                 }
 
-                if (element === Math.floor(result.dim[Dimension.Width] / 2) || element === 0) {
+                if (
+                    element === Math.floor(result.dim[Dimension.Width] / 2) ||
+                    element === 0
+                ) {
                     i *= -1
                 }
 
@@ -169,7 +174,9 @@ class SpriteBuilder {
      */
     public withDim(dim: [number, number]): SpriteBuilder {
         if (this.result !== undefined) {
-            throw new Error('Can\'t change the dimension after having a sprite already built.')
+            throw new Error(
+                "Can't change the dimension after having a sprite already built."
+            )
         }
 
         this.spriteDimensions = dim
@@ -184,18 +191,36 @@ class SpriteBuilder {
      * @param {[number, number, number, number]} borders Amount of pixels at each corner. See the enum Border.
      * @param {Color} borderColor The color for the new border. Defaults to blankColor
      */
-    public withBorder(borders: [number, number, number, number] = this.border, borderColor: Color = this.blankColor): SpriteBuilder {
+    public withBorder(
+        borders: [number, number, number, number] = this.border,
+        borderColor: Color = this.blankColor
+    ): SpriteBuilder {
         if (this.result === undefined) {
             throw new Error('No sprite is set on builder.')
         }
 
-        let result = new Sprite({dim: [
-            this.result.dim[Dimension.Width] + borders[Border.Left] + borders[Border.Right],
-            this.result.dim[Dimension.Height] + borders[Border.Up] + borders[Border.Down]
-        ], colorFill: borderColor})
+        let result = new Sprite({
+            dim: [
+                this.result.dim[Dimension.Width] +
+                    borders[Border.Left] +
+                    borders[Border.Right],
+                this.result.dim[Dimension.Height] +
+                    borders[Border.Up] +
+                    borders[Border.Down]
+            ],
+            colorFill: borderColor
+        })
 
-        for (let x = borders[Border.Left], i = 0; i < this.result.dim[Dimension.Width]; x++, i++) {
-            for (let y = borders[Border.Up], j = 0; j < this.result.dim[Dimension.Height]; y++, j++) {
+        for (
+            let x = borders[Border.Left], i = 0;
+            i < this.result.dim[Dimension.Width];
+            x++, i++
+        ) {
+            for (
+                let y = borders[Border.Up], j = 0;
+                j < this.result.dim[Dimension.Height];
+                y++, j++
+            ) {
                 result.setPixelAt(x, y, this.result.pixelAt(i, j))
             }
         }
@@ -215,7 +240,11 @@ class SpriteBuilder {
      * @param {Number} edgeWeight The weight for the edge when mixing with the adjacend pixel.
      * @param {boolean} addExtraBorder Adds 1 pixel border to fit the new edges. True by default.
      */
-    public withEdges(edgeColor: Color = Color.BLACK, edgeWeight: number = 0.7, addExtraBorder: boolean = true): SpriteBuilder {
+    public withEdges(
+        edgeColor: Color = Color.BLACK,
+        edgeWeight: number = 0.7,
+        addExtraBorder: boolean = true
+    ): SpriteBuilder {
         if (this.result === undefined) {
             throw new Error('No sprite is set on builder.')
         }
@@ -227,47 +256,60 @@ class SpriteBuilder {
 
         // Top to bottom
         // TODO add horizontalSymmetry
-        for(let x = 0; x < this.result.dim[Dimension.Width]; x++) {
-            for(let y = 0; y < this.result.dim[Dimension.Height]; y++) {
-                let pixel = this.result.pixelAt(x, y);
+        for (let x = 0; x < this.result.dim[Dimension.Width]; x++) {
+            for (let y = 0; y < this.result.dim[Dimension.Height]; y++) {
+                let pixel = this.result.pixelAt(x, y)
 
-                if (pixel.equals(edgeColor))
-                    break
+                if (pixel.equals(edgeColor)) break
 
                 if (!pixel.equals(this.blankColor)) {
-                    this.result.setPixelAtChecked(x, y - 1, pixel.mixWeighed(edgeColor, edgeWeight))
+                    this.result.setPixelAtChecked(
+                        x,
+                        y - 1,
+                        pixel.mixWeighed(edgeColor, edgeWeight)
+                    )
                     break
                 }
             }
         }
 
         // Right to left
-        for(let y = 0; y < this.result.dim[Dimension.Height]; y++) {
-            for(let x = 0; x < this.result.dim[Dimension.Width]; x++) {
-                let pixel = this.result.pixelAt(x, y);
+        for (let y = 0; y < this.result.dim[Dimension.Height]; y++) {
+            for (let x = 0; x < this.result.dim[Dimension.Width]; x++) {
+                let pixel = this.result.pixelAt(x, y)
 
-                if (pixel.equals(edgeColor))
-                    break
+                if (pixel.equals(edgeColor)) break
 
                 if (!pixel.equals(this.blankColor)) {
-                    this.result.setPixelAtChecked(x - 1, y, pixel.mixWeighed(edgeColor, edgeWeight))
+                    this.result.setPixelAtChecked(
+                        x - 1,
+                        y,
+                        pixel.mixWeighed(edgeColor, edgeWeight)
+                    )
                     // TODO In the future, check if the sprite is vertically symmetric
-                    this.result.setPixelAtChecked(this.result.dim[Dimension.Width] - x, y, pixel.mixWeighed(edgeColor, edgeWeight))
+                    this.result.setPixelAtChecked(
+                        this.result.dim[Dimension.Width] - x,
+                        y,
+                        pixel.mixWeighed(edgeColor, edgeWeight)
+                    )
                     break
                 }
             }
         }
 
         // Down to up
-        for(let x = 0; x < this.result.dim[Dimension.Width]; x++) {
-            for(let y = this.result.dim[Dimension.Height] - 1; y > 0 ; y--) {
-                let pixel = this.result.pixelAt(x, y);
+        for (let x = 0; x < this.result.dim[Dimension.Width]; x++) {
+            for (let y = this.result.dim[Dimension.Height] - 1; y > 0; y--) {
+                let pixel = this.result.pixelAt(x, y)
 
-                if (pixel.equals(edgeColor))
-                    break
+                if (pixel.equals(edgeColor)) break
 
                 if (!pixel.equals(this.blankColor)) {
-                    this.result.setPixelAtChecked(x, y + 1, pixel.mixWeighed(edgeColor, edgeWeight))
+                    this.result.setPixelAtChecked(
+                        x,
+                        y + 1,
+                        pixel.mixWeighed(edgeColor, edgeWeight)
+                    )
                     break
                 }
             }
@@ -295,7 +337,14 @@ class SpriteBuilder {
      *
      * @param {(dim: [number, number], x: number, y: number, pixel: Color) => Color} func The function to apply at each pixel.
      */
-    public transform(func: (dim: [number, number], x: number, y: number, pixel: Color) => Color): SpriteBuilder {
+    public transform(
+        func: (
+            dim: [number, number],
+            x: number,
+            y: number,
+            pixel: Color
+        ) => Color
+    ): SpriteBuilder {
         if (this.result === undefined) {
             throw new Error('No sprite is set on builder.')
         }
@@ -319,20 +368,27 @@ class SpriteBuilder {
      * @param {[number, number]} dim The desired dimension.
      * @param {Color} paddingColor The color to be used for padding.
      */
-    public withPadding(dim: [number, number], paddingColor: Color = this.blankColor): SpriteBuilder {
+    public withPadding(
+        dim: [number, number],
+        paddingColor: Color = this.blankColor
+    ): SpriteBuilder {
         if (this.result === undefined) {
             throw new Error('No sprite is set on builder.')
         }
 
         if (dim[0] < this.result.dim[0]) {
-            throw new Error(`Cannot set padding because ${dim[0]} is less than the existing width of ${this.result.dim[0]}`)
+            throw new Error(
+                `Cannot set padding because ${dim[0]} is less than the existing width of ${this.result.dim[0]}`
+            )
         }
         if (dim[1] < this.result.dim[1]) {
-            throw new Error(`Cannot set padding because ${dim[1]} is less than the existing height of ${this.result.dim[1]}`)
+            throw new Error(
+                `Cannot set padding because ${dim[1]} is less than the existing height of ${this.result.dim[1]}`
+            )
         }
 
-        let old: Sprite = this.result;
-        this.result = new Sprite({dim: dim, colorFill: paddingColor})
+        let old: Sprite = this.result
+        this.result = new Sprite({ dim: dim, colorFill: paddingColor })
 
         let leftOffset = Math.floor((dim[0] - old.dim[0]) / 2)
         let topOffset = Math.floor((dim[1] - old.dim[1]) / 2)
@@ -367,9 +423,11 @@ class SpriteBuilder {
     // Gets either a random pallet or the builder's one
     public getPallet(): Array<Color> {
         if (this.useRandomPallet)
-            return SpriteBuilder.randomPallet(this.randomColorCount, this.randomAlpha)
-        else
-            return this.colorPallet
+            return SpriteBuilder.randomPallet(
+                this.randomColorCount,
+                this.randomAlpha
+            )
+        else return this.colorPallet
     }
 
     // Selects a color from the builder pallet or a random one, assuming that the blanks have already been added
@@ -379,18 +437,29 @@ class SpriteBuilder {
 
     // Adds blank colors to the pallet so that the ratio of them is close to the builder's blankPercentage
     public addBlanks(pallet: Array<Color>): Array<Color> {
-        const blanksToInsert = Math.round((pallet.length * this.blankPercentage) / (1 - this.blankPercentage))
-        return [...pallet].concat(...new Array(blanksToInsert).fill(null).map(() => this.blankColor.copy()))
+        const blanksToInsert = Math.round(
+            (pallet.length * this.blankPercentage) / (1 - this.blankPercentage)
+        )
+        return [...pallet].concat(
+            ...new Array(blanksToInsert)
+                .fill(null)
+                .map(() => this.blankColor.copy())
+        )
     }
 
     public static randInt(min: number, max: number): number {
-        return Math.floor(Math.random() * (max - min + 1)) + min;
+        return Math.floor(Math.random() * (max - min + 1)) + min
     }
 
-    public static randomPallet(colorCount: number, randomAlpha: boolean): Array<Color> {
+    public static randomPallet(
+        colorCount: number,
+        randomAlpha: boolean
+    ): Array<Color> {
         Validator.positive(colorCount, 'colorCount')
 
-        return Array.from({ length: colorCount }, () => Color.random(randomAlpha))
+        return Array.from({ length: colorCount }, () =>
+            Color.random(randomAlpha)
+        )
     }
 
     private validate(): void {

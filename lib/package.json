@@ -33,5 +33,14 @@
   "devDependencies": {
     "jest": "^26.6.3",
     "ts-jest": "^26.4.4"
+  },
+  "prettier": {
+    "trailingComma": "none",
+    "semi": false,
+    "tabWidth": 4,
+    "singleQuote": true,
+    "arrowParens": "avoid",
+    "useTabs": false,
+    "printWidth": 80
   }
 }
