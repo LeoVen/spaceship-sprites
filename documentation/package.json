@@ -2,6 +2,7 @@
   "name": "spaceship-sprites-documentation",
   "version": "0.1.0",
   "private": true,
+  "description": "Spaceship Sprite is a random ship sprite generator in typescript.",
   "homepage": "https://leoven.github.io/spaceship-sprites/",
   "dependencies": {
     "@testing-library/jest-dom": "^5.11.8",
