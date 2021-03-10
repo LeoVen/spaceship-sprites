@@ -41,6 +41,7 @@
     "singleQuote": true,
     "arrowParens": "avoid",
     "useTabs": false,
-    "printWidth": 80
+    "printWidth": 80,
+    "jsxBracketSameLine": true
   }
 }
